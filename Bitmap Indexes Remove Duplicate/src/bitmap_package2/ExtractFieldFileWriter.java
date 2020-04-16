@@ -1,34 +1,27 @@
-package comp6521_la1;
+package bitmap_package2;
 
-import java.io.FileOutputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 
-
-public class EmployeeFileWriter implements EmployeeFile
-{
+public class ExtractFieldFileWriter implements ExtractFieldFile {
 	
 	private FileOutputStream mOutputStream=null;
 	private BufferedOutputStream mBuffOutputStream=null;
-	private long mBytesWritten;
 	private int mRecordWritten;
-	private int mDiskWrite;
-	
-	public EmployeeFileWriter(File aFile) throws FileNotFoundException
+
+	public ExtractFieldFileWriter(File aFile) throws FileNotFoundException
 	{
 		mOutputStream=new FileOutputStream(aFile, false);
-		mBuffOutputStream=new BufferedOutputStream(mOutputStream, BLOCK_SIZE);//RA: By using BufferedOutputStream we simulate writing data in blocks of size BLOCK_SIZE
-		//RA: Alternative approach might include utilizing java.nio.file.Files and java.nio.channels routines to read from disk
-		mBytesWritten=0;
+		mBuffOutputStream=new BufferedOutputStream(mOutputStream, BLOCK_SIZE);
 		mRecordWritten=0;
-		mDiskWrite=0;
 	}
-	
-	public void WriteRecord(Employee aEmployee) throws IOException 
+
+	public void WriteRecord(ExtractField aExtractField) throws IOException 
 	{
 		ByteArrayOutputStream lOutByteStream=null;
 		PrintStream lOutPrintStream=null;
@@ -36,9 +29,12 @@ public class EmployeeFileWriter implements EmployeeFile
 		
 		try
 		{
-			lOutByteStream=new ByteArrayOutputStream(RECORD_SIZE);
-			lOutPrintStream=new PrintStream(lOutByteStream);						
-			lOutPrintStream.print(aEmployee.GetData());	
+			lOutByteStream=new ByteArrayOutputStream(INDEX_SIZE);
+			lOutPrintStream=new PrintStream(lOutByteStream);			
+			
+			lOutPrintStream.format("%0"+INDEXPROCESS_SIZE+"d", aExtractField.GetIdProcessed());
+			lOutPrintStream.format("%0"+EMPID_SIZE+"d", aExtractField.GetId());
+			lOutPrintStream.print('\n');			
 			lOutPrintStream.flush();
 			lOutput=lOutByteStream.toByteArray();
 			mRecordWritten++;
@@ -57,9 +53,9 @@ public class EmployeeFileWriter implements EmployeeFile
 		if((lOutput!=null)&&(lOutput.length>0))
 		{
 			mBuffOutputStream.write(lOutput);
-			mBytesWritten+=lOutput.length;
 		}
 	}
+
 	
 	@Override
 	public void Close()
@@ -86,22 +82,18 @@ public class EmployeeFileWriter implements EmployeeFile
 				System.err.println("Error closing output stream: "+aEx.getMessage());
 			}
 		}
-	}
+	}	
 	
-	public long GetBytesWritten()
-	{
-		return mBytesWritten;
-	}
 	public int GetRecordsWritten()
 	{
 		return mRecordWritten;
 	}
 	public int GetBlocksWritten()
 	{
-		return mRecordWritten * RECORD_SIZE / USED_BLOCK_SIZE;
+		return mRecordWritten * INDEX_SIZE / USED_BLOCK_SIZE;
 	}
 	public int GetDiskWrite()
 	{
 		return GetBlocksWritten();
-	}	
+	}
 }
